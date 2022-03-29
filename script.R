@@ -236,7 +236,7 @@ for(i in 1:ncol(Data)){
 Data <- Data %>% mutate_each_(list(~scale(.) %>% as.vector), vars = norm_list)
 
 # one-hot encoding
-Data <- as.data.frame(model.matrix(~0+., Data), row.names = NULL, optional = FALSE)
+# Data <- as.data.frame(model.matrix(~0+., Data), row.names = NULL, optional = FALSE)
 
 # pfc - performance frame counter
 pfc <- 0 
@@ -249,12 +249,13 @@ cat("Modeling step has been reached.\n")
 # rename last column to target, last column must always be the target variable
 names(Data)[ncol(Data)] <- "Target"
 
-# K-fold Cross Validation Naive Bayes
-cat("K-fold Cross-Validation implementation")
+# K-fold Cross Validation Naive Bayes (temporarily retired)
+cat("K-fold Cross-Validation implementation\n")
 
 train_control <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
-model <- train(Target~., data = Data, trControl = train_control, method = "gbm")
+model <- train(Target~., data = Data, trControl = train_control, method = "nb")
 print(model)
+confusionMatrix(model)
 
 # C5.0 algorithm (decision tree)
 cat("C5.0 implementation")
