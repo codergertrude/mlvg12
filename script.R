@@ -226,7 +226,7 @@ for(i in 1:ncol(Data)){
   }
 }
 
-# normalisation (scaling)
+# min-max normalisation 
 norm_list = c()
 for(i in 1:ncol(Data)){
   if(is.numeric(Data[, i])){
