@@ -236,7 +236,7 @@ for(i in 1:ncol(Data)){
 Data <- Data %>% mutate_each_(list(~scale(.) %>% as.vector), vars = norm_list)
 
 # one-hot encoding
-# Data <- as.data.frame(model.matrix(~0+., Data), row.names = NULL, optional = FALSE)
+Data <- as.data.frame(model.matrix(~0+., Data), row.names = NULL, optional = FALSE)
 
 # pfc - performance frame counter
 pfc <- 0 
@@ -249,55 +249,55 @@ cat("Modeling step has been reached.\n")
 # rename last column to target, last column must always be the target variable
 names(Data)[ncol(Data)] <- "Target"
 
-# K-fold Cross Validation Naive Bayes (temporarily retired)
-cat("K-fold Cross-Validation implementation\n")
+# # K-fold Cross Validation Naive Bayes (temporarily retired)
+# cat("K-fold Cross-Validation implementation\n")
+# 
+# train_control <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
+# model <- train(Target~., data = Data, trControl = train_control, method = "nb")
+# print(model)
+# confusionMatrix(model)
 
-train_control <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
-model <- train(Target~., data = Data, trControl = train_control, method = "nb")
-print(model)
-confusionMatrix(model)
+# # C5.0 algorithm (decision tree)
+# cat("C5.0 implementation")
+# for(t in training_data_percentages){
+#   pfc = pfc + 1
+#   
+#   print("================================================================================================================")
+#   cat(sprintf("Current training partition: %s\n", t))
+#   
+#   indx_partition = createDataPartition(Data[, ncol(Data)], p = t, list = FALSE)
+#   training_data = Data[indx_partition,]
+#   testing_data = Data[-indx_partition,]
+#   
+#   set.seed(42)
+#   TrainedClassifier = C5.0(x = training_data[, 1:ncol(testing_data)-1], y = training_data[, ncol(Data)])
+#   Predicted_outcomes = predict(TrainedClassifier, newdata = testing_data[, 1:ncol(testing_data)-1])
+#   
+#   cm <- confusionMatrix(testing_data[, ncol(testing_data)], Predicted_outcomes)
+#   print(cm)
+#   print("END OF RUN")
+# }
 
-# C5.0 algorithm (decision tree)
-cat("C5.0 implementation")
-for(t in training_data_percentages){
-  pfc = pfc + 1
-  
-  print("================================================================================================================")
-  cat(sprintf("Current training partition: %s\n", t))
-  
-  indx_partition = createDataPartition(Data[, ncol(Data)], p = t, list = FALSE)
-  training_data = Data[indx_partition,]
-  testing_data = Data[-indx_partition,]
-  
-  set.seed(42)
-  TrainedClassifier = C5.0(x = training_data[, 1:ncol(testing_data)-1], y = training_data[, ncol(Data)])
-  Predicted_outcomes = predict(TrainedClassifier, newdata = testing_data[, 1:ncol(testing_data)-1])
-  
-  cm <- confusionMatrix(testing_data[, ncol(testing_data)], Predicted_outcomes)
-  print(cm)
-  print("END OF RUN")
-}
-
-# Naive Bayes algorithm
-cat("Naive Bayes implementation")
-for(t in training_data_percentages){
-  pfc = pfc + 1
-  
-  print("================================================================================================================")
-  cat(sprintf("Current training partition: %s\n", t))
-  
-  indx_partition = createDataPartition(Data[, ncol(Data)], p = t, list = FALSE)
-  training_data = Data[indx_partition,]
-  testing_data = Data[-indx_partition,]
-  
-  set.seed(42)
-  TrainedClassifier = naiveBayes(Target ~ ., data = training_data, laplace=0) 
-  Predicted_outcomes = predict(TrainedClassifier, newdata = testing_data[,1:ncol(testing_data)-1])
-  
-  cm <- confusionMatrix(testing_data[, ncol(testing_data)], Predicted_outcomes)
-  print(cm)
-  print("END OF RUN")
-}
+# # Naive Bayes algorithm
+# cat("Naive Bayes implementation")
+# for(t in training_data_percentages){
+#   pfc = pfc + 1
+#   
+#   print("================================================================================================================")
+#   cat(sprintf("Current training partition: %s\n", t))
+#   
+#   indx_partition = createDataPartition(Data[, ncol(Data)], p = t, list = FALSE)
+#   training_data = Data[indx_partition,]
+#   testing_data = Data[-indx_partition,]
+#   
+#   set.seed(42)
+#   TrainedClassifier = naiveBayes(Target ~ ., data = training_data, laplace=0) 
+#   Predicted_outcomes = predict(TrainedClassifier, newdata = testing_data[,1:ncol(testing_data)-1])
+#   
+#   cm <- confusionMatrix(testing_data[, ncol(testing_data)], Predicted_outcomes)
+#   print(cm)
+#   print("END OF RUN")
+# }
 
 # # OneR algorithm (not working)
 # cat("OneR implementation")
@@ -320,3 +320,29 @@ for(t in training_data_percentages){
 #   print("END OF RUN")
 # }
 
+# Neural Network algorithm
+cat("Neural Network implementation")
+for(t in training_data_percentages){
+  pfc = pfc + 1
+
+  print("================================================================================================================")
+  cat(sprintf("Current training partition: %s\n", t))
+
+  indx_partition = createDataPartition(Data[, ncol(Data)], p = t, list = FALSE)
+  training_data = Data[indx_partition,]
+  testing_data = Data[-indx_partition,]
+  
+  cat("Partitions created.\n")
+
+  set.seed(42)
+  # nn formula only takes 30 variables, has to be filtered down
+  TrainedNeuralNet <- neuralnet(Target ~ ., data = training_data, hidden = 2)
+  cat("Neural network trained.\n")
+  
+  Predicted_Parameters <- compute(TrainedNeuralNet, testing_data)
+  Predicted_Net_Results <- Predicted_Parameters$net.result
+  Predicted_Data <- sapply(Predicted_Net_Results,round,digits=0)
+  Predicted_Data <- data.frame(Predicted_Data)
+
+  print("END OF RUN")
+}
