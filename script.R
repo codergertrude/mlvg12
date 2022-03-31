@@ -235,8 +235,8 @@ for(i in 1:ncol(Data)){
 }
 Data <- Data %>% mutate_each_(list(~scale(.) %>% as.vector), vars = norm_list)
 
-# one-hot encoding
-Data <- as.data.frame(model.matrix(~0+., Data), row.names = NULL, optional = FALSE)
+# one-hot encoding (on a new df for testing)
+DataOH <- as.data.frame(model.matrix(~0+., Data), row.names = NULL, optional = FALSE)
 
 # pfc - performance frame counter
 pfc <- 0 
@@ -248,14 +248,29 @@ cat("Modeling step has been reached.\n")
 
 # rename last column to target, last column must always be the target variable
 names(Data)[ncol(Data)] <- "Target"
+names(DataOH)[ncol(DataOH)] <- "Target"
 
-# # K-fold Cross Validation Naive Bayes (temporarily retired)
-# cat("K-fold Cross-Validation implementation\n")
-# 
-# train_control <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
-# model <- train(Target~., data = Data, trControl = train_control, method = "nb")
-# print(model)
-# confusionMatrix(model)
+# Feature importance using LVQ (Learning Vector Quantified)
+cat("LVQ feature selection implementation\n")
+
+set.seed(42)
+train_control <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
+model <- train(Target~., data = Data, trControl = train_control, method = "lvq")
+importance <- varImp(model, scale=FALSE)
+print(importance)
+plot(importance)
+print(model)
+confusionMatrix(model)
+
+# Feature importance using RFE (Recursive Feature Elimination)
+cat("RFE feature selection implementation\n")
+
+set.seed(42)
+control <- rfeControl(functions=rfFuncs, method="cv", number=10)
+results <- rfe(Data[,1:ncol(Data)-1], Data$Target, sizes=c(1:ncol(Data)-1), rfeControl=control)
+print(results)
+predictors(results)
+plot(results, type=c("g", "o"))
 
 # # C5.0 algorithm (decision tree)
 # cat("C5.0 implementation")
@@ -336,13 +351,16 @@ for(t in training_data_percentages){
 
   set.seed(42)
   # nn formula only takes 30 variables, has to be filtered down
-  TrainedNeuralNet <- neuralnet(Target ~ ., data = training_data, hidden = 2)
+  TrainedNeuralNet <- neuralnet(Target ~ ., data = training_data[9:ncol(training_data)], hidden = 2)
   cat("Neural network trained.\n")
   
   Predicted_Parameters <- compute(TrainedNeuralNet, testing_data)
   Predicted_Net_Results <- Predicted_Parameters$net.result
   Predicted_Data <- sapply(Predicted_Net_Results,round,digits=0)
   Predicted_Data <- data.frame(Predicted_Data)
+  par(mfrow=c(2,1))
+  corln <- cor(Predicted_Data, testing_data$Target)
+  corln
 
   print("END OF RUN")
 }
