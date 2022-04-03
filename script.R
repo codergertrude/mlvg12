@@ -313,8 +313,6 @@ plot(results, type=c("g", "o"))
 # Naive Bayes algorithm
 cat("Naive Bayes implementation")
 for(t in training_data_percentages){
-  pfc = pfc + 1
-
   print("================================================================================================================")
   cat(sprintf("Current training partition: %s\n", t))
 
