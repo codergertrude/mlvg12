@@ -3,6 +3,7 @@ library(ggcorrplot)
 library(lattice)
 library(caret)
 library(dplyr)
+library(plyr)
 library(tidyverse)
 library(lubridate)
 library(e1071)
@@ -16,6 +17,12 @@ library(OneR)
 library(RWeka)
 # library for Neural Network
 library(neuralnet)
+
+install.packages("devtools")
+library(devtools)
+install_github("vqv/ggbiplot")
+library(ggbiplot)
+library(factoextra)
 
 # read from csv file, but file is not comma separated so use delim
 Data = read.delim("marketing_campaign_1.csv", stringsAsFactors = FALSE)
@@ -96,9 +103,6 @@ for(i in 1:ncol(Data)){
     cat(sprintf("%s is non-numeric\n", i))
   }
 }
-
-# temporary hard code for date feature
-# Data <- Data %>% select(-contains("dt"))
 
 # extract year from dates formatted dd-mm-YY, other formats can be added
 for(i in 1:ncol(Data)){
@@ -250,6 +254,19 @@ cat("Modeling step has been reached.\n")
 names(Data)[ncol(Data)] <- "Target"
 names(DataOH)[ncol(DataOH)] <- "Target"
 
+# principal component analysis
+numlist = c()
+for(i in 1:ncol(Data)){
+  if(is.numeric(Data[,i]) == TRUE){
+    numlist = c(numlist, i)
+  }
+}
+numlist = c(numlist, ncol(Data))
+DataNum = Data[,numlist]
+Data.pca <- prcomp(DataNum, center = TRUE, scale. = TRUE)
+fviz_eig(Data.pca)
+fviz_pca_ind(Data.pca, col.ind = "cos2", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE)
+
 # Feature importance using LVQ (Learning Vector Quantified)
 cat("LVQ feature selection implementation\n")
 
@@ -293,26 +310,26 @@ plot(results, type=c("g", "o"))
 #   print("END OF RUN")
 # }
 
-# # Naive Bayes algorithm
-# cat("Naive Bayes implementation")
-# for(t in training_data_percentages){
-#   pfc = pfc + 1
-#   
-#   print("================================================================================================================")
-#   cat(sprintf("Current training partition: %s\n", t))
-#   
-#   indx_partition = createDataPartition(Data[, ncol(Data)], p = t, list = FALSE)
-#   training_data = Data[indx_partition,]
-#   testing_data = Data[-indx_partition,]
-#   
-#   set.seed(42)
-#   TrainedClassifier = naiveBayes(Target ~ ., data = training_data, laplace=0) 
-#   Predicted_outcomes = predict(TrainedClassifier, newdata = testing_data[,1:ncol(testing_data)-1])
-#   
-#   cm <- confusionMatrix(testing_data[, ncol(testing_data)], Predicted_outcomes)
-#   print(cm)
-#   print("END OF RUN")
-# }
+# Naive Bayes algorithm
+cat("Naive Bayes implementation")
+for(t in training_data_percentages){
+  pfc = pfc + 1
+
+  print("================================================================================================================")
+  cat(sprintf("Current training partition: %s\n", t))
+
+  indx_partition = createDataPartition(Data[, ncol(Data)], p = t, list = FALSE)
+  training_data = Data[indx_partition,]
+  testing_data = Data[-indx_partition,]
+
+  set.seed(42)
+  TrainedClassifier = naiveBayes(Target ~ ., data = training_data, laplace=0)
+  Predicted_outcomes = predict(TrainedClassifier, newdata = testing_data[,1:ncol(testing_data)-1])
+
+  cm <- confusionMatrix(testing_data[, ncol(testing_data)], Predicted_outcomes)
+  print(cm)
+  print("END OF RUN")
+}
 
 # # OneR algorithm (not working)
 # cat("OneR implementation")
