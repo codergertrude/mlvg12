@@ -261,18 +261,11 @@ for(i in 1:ncol(Data)){
     numlist = c(numlist, i)
   }
 }
-numlist = c(numlist, ncol(Data))
 DataNum = Data[,numlist]
 Data.pca <- prcomp(DataNum, center = TRUE, scale. = TRUE)
 fviz_eig(Data.pca)
-fviz_pca_ind(Data.pca, 
-             col.ind = "cos2", 
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), 
-             repel = TRUE)
-fviz_pca_var(Data.pca,
-             col.var = "contrib",
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             repel = TRUE)
+ggrepel.max.overlaps = Inf
+fviz_pca_var(Data.pca, col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE)
 
 # Feature importance using LVQ (Learning Vector Quantified)
 cat("LVQ feature selection implementation\n")
