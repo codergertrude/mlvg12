@@ -9,6 +9,8 @@ library(lubridate)
 library(e1071)
 library(Hmisc)
 library(corrplot)
+library(devtools)
+library(factoextra)
 # library for C5 algorithm
 library(C50)
 # library for OneR algorithm
@@ -17,12 +19,6 @@ library(OneR)
 library(RWeka)
 # library for Neural Network
 library(neuralnet)
-
-install.packages("devtools")
-library(devtools)
-install_github("vqv/ggbiplot")
-library(ggbiplot)
-library(factoextra)
 
 # read from csv file, but file is not comma separated so use delim
 Data = read.delim("marketing_campaign_1.csv", stringsAsFactors = FALSE)
@@ -179,25 +175,6 @@ for(i in 1:ncol(Data)){
 # remove rows that contain outliers for factor
 Data = Data[-c(frow_list),]
 
-# # graphs using ggplot
-# plot_list = list()
-# for(i in 1:ncol(Data)){
-#   var = names(Data)[i]
-#   
-#   if(is.numeric(Data[, i]) == TRUE){
-#     # plot_list[[i]] = ggplot(Data, aes(, Data[, i])) + geom_boxplot() + labs(title = var) + coord_flip()
-#     plot_list[[i]] = ggplot(Data, aes(, Data[, i])) + geom_histogram(bins = 10) + labs(title = var) + coord_flip()
-#     print(plot_list[[i]])
-#   }
-#   else if(is.factor(Data[, i]) == TRUE){
-#     plot_list[[i]] = ggplot(Data, aes(, Data[, i])) + geom_bar() + labs(title = var) + coord_flip()
-#     print(plot_list[[i]])
-#   }
-#   else{
-#     cat(sprintf("feature %s is not graphable\n", i))
-#   }
-# }
-
 # print correlation matrix
 model.matrix(~0+., Data) %>%
   cor() %>%
@@ -219,14 +196,26 @@ for(i in 1:ncol(Data)){
   }
 }
 
-# visualise outliers after capping
+# prompt to show graphs, must convert prompt.graphs to numeric to use if() statement
+prompt.graphs <- readline(prompt="Type 1 to see exploratory graphs: ")
+prompt.graphs <- as.integer(prompt.graphs)
+
 plot_list = list()
-for(i in 1:ncol(Data)){
-  var = names(Data)[i]
-  if(is.numeric(Data[, i]) == TRUE){
-    plot_list[[i]] = ggplot(Data, aes(, Data[, i])) + geom_boxplot() + labs(title = var)
-    # plot_list[[i]] = ggplot(Data, aes(, Data[, i])) + geom_histogram(bins = 10) + labs(title = var) + coord_flip()
-    print(plot_list[[i]])
+if(prompt.graphs == 1){
+  for(i in 1:ncol(Data)){
+    var = names(Data)[i]
+    if(is.numeric(Data[, i]) == TRUE){
+      plot_list[[i]] = ggplot(Data, aes(, Data[, i])) + geom_boxplot() + labs(title = var)
+      # plot_list[[i]] = ggplot(Data, aes(, Data[, i])) + geom_histogram(bins = 10) + labs(title = var) + coord_flip()
+      print(plot_list[[i]])
+    }
+    else if(is.factor(Data[, i]) == TRUE){
+      plot_list[[i]] = ggplot(Data, aes(, Data[, i])) + geom_bar() + labs(title = var) + coord_flip()
+      print(plot_list[[i]])
+    }
+    else{
+      cat(sprintf("feature %s is not graphable\n", i))
+    }
   }
 }
 
@@ -279,7 +268,7 @@ plot(importance)
 print(model)
 confusionMatrix(model)
 
-# Feature importance using RFE (Recursive Feature Elimination)
+# Feature importance using RFE (Recursive Feature Elimination) (doesn't work on 4/4/22)
 cat("RFE feature selection implementation\n")
 
 set.seed(42)
@@ -314,7 +303,7 @@ plot(results, type=c("g", "o"))
 cat("Naive Bayes implementation")
 for(t in training_data_percentages){
   print("================================================================================================================")
-  cat(sprintf("Current training partition: %s\n", t))
+  cat(sprintf("Current train-test split: %s-%1.0f\n", t*100, (1-t)*100))
 
   indx_partition = createDataPartition(Data[, ncol(Data)], p = t, list = FALSE)
   training_data = Data[indx_partition,]
@@ -351,31 +340,31 @@ for(t in training_data_percentages){
 # }
 
 # Neural Network algorithm
-cat("Neural Network implementation")
-for(t in training_data_percentages){
-  pfc = pfc + 1
-
-  print("================================================================================================================")
-  cat(sprintf("Current training partition: %s\n", t))
-
-  indx_partition = createDataPartition(Data[, ncol(Data)], p = t, list = FALSE)
-  training_data = Data[indx_partition,]
-  testing_data = Data[-indx_partition,]
-  
-  cat("Partitions created.\n")
-
-  set.seed(42)
-  # nn formula only takes 30 variables, has to be filtered down
-  TrainedNeuralNet <- neuralnet(Target ~ ., data = training_data[9:ncol(training_data)], hidden = 2)
-  cat("Neural network trained.\n")
-  
-  Predicted_Parameters <- compute(TrainedNeuralNet, testing_data)
-  Predicted_Net_Results <- Predicted_Parameters$net.result
-  Predicted_Data <- sapply(Predicted_Net_Results,round,digits=0)
-  Predicted_Data <- data.frame(Predicted_Data)
-  par(mfrow=c(2,1))
-  corln <- cor(Predicted_Data, testing_data$Target)
-  corln
-
-  print("END OF RUN")
-}
+# cat("Neural Network implementation")
+# for(t in training_data_percentages){
+#   pfc = pfc + 1
+# 
+#   print("================================================================================================================")
+#   cat(sprintf("Current training partition: %s\n", t))
+# 
+#   indx_partition = createDataPartition(Data[, ncol(Data)], p = t, list = FALSE)
+#   training_data = Data[indx_partition,]
+#   testing_data = Data[-indx_partition,]
+#   
+#   cat("Partitions created.\n")
+# 
+#   set.seed(42)
+#   # nn formula only takes 30 variables, has to be filtered down
+#   TrainedNeuralNet <- neuralnet(Target ~ ., data = training_data[9:ncol(training_data)], hidden = 2)
+#   cat("Neural network trained.\n")
+#   
+#   Predicted_Parameters <- compute(TrainedNeuralNet, testing_data)
+#   Predicted_Net_Results <- Predicted_Parameters$net.result
+#   Predicted_Data <- sapply(Predicted_Net_Results,round,digits=0)
+#   Predicted_Data <- data.frame(Predicted_Data)
+#   par(mfrow=c(2,1))
+#   corln <- cor(Predicted_Data, testing_data$Target)
+#   corln
+# 
+#   print("END OF RUN")
+# }
