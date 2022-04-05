@@ -231,9 +231,6 @@ Data <- Data %>% mutate_each_(list(~scale(.) %>% as.vector), vars = norm_list)
 # one-hot encoding (on a new df for testing)
 DataOH <- as.data.frame(model.matrix(~0+., Data), row.names = NULL, optional = FALSE)
 
-# pfc - performance frame counter
-pfc <- 0 
-
 # partition percentage for loop
 training_data_percentages <- seq(from = 0.1, to = 0.9, length.out = 9)
 
@@ -268,7 +265,7 @@ plot(importance)
 print(model)
 confusionMatrix(model)
 
-# Feature importance using RFE (Recursive Feature Elimination) (doesn't work on 4/4/22)
+# Feature importance using RFE (Recursive Feature Elimination)
 cat("RFE feature selection implementation\n")
 
 set.seed(42)
@@ -281,8 +278,6 @@ plot(results, type=c("g", "o"))
 # # C5.0 algorithm (decision tree)
 # cat("C5.0 implementation")
 # for(t in training_data_percentages){
-#   pfc = pfc + 1
-#   
 #   print("================================================================================================================")
 #   cat(sprintf("Current training partition: %s\n", t))
 #   
@@ -321,8 +316,6 @@ for(t in training_data_percentages){
 # # OneR algorithm (not working)
 # cat("OneR implementation")
 # for(t in training_data_percentages){
-#   pfc = pfc + 1
-#   
 #   print("================================================================================================================")
 #   cat(sprintf("Current training partition: %s\n", t))
 #   
@@ -342,8 +335,6 @@ for(t in training_data_percentages){
 # Neural Network algorithm
 # cat("Neural Network implementation")
 # for(t in training_data_percentages){
-#   pfc = pfc + 1
-# 
 #   print("================================================================================================================")
 #   cat(sprintf("Current training partition: %s\n", t))
 # 
