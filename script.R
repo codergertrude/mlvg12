@@ -351,6 +351,30 @@ plot(results, type=c("g", "o"))
 #   print("END OF RUN")
 # }
 
+# # Logistic regression algorithm (courtesy of Oil)
+# cat("Logistic regression implementation")
+# for(t in training_data_percentages){
+#   print("================================================================================================================")
+#   cat(sprintf("Current training partition: %s\n", t))
+# 
+#   indx_partition = createDataPartition(Data[, ncol(Data)], p = t, list = FALSE)
+#   training_data = Data[indx_partition,]
+#   testing_data = Data[-indx_partition,]
+# 
+#   set.seed(42)
+#   TrainedClassifier = glm(Target ~ .,family=binomial(link='logit'), data = training_data)
+#   Predicted_outcomes = predict(TrainedClassifier, newdata = testing_data[,1:ncol(testing_data)-1], type = "response")
+# 
+#   # Set decision threshold
+#   Predicted_outcomes <- ifelse(Predicted_outcomes > 0.5, 1, 0)
+#   
+#   cat("modeling reached\n")
+# 
+#   cm <- confusionMatrix(testing_data$Target, as.factor(Predicted_outcomes))
+#   print(cm)
+#   print("END OF RUN")
+# }
+
 # # Neural Network algorithm
 # cat("Neural Network implementation")
 # for(t in training_data_percentages){
@@ -378,3 +402,5 @@ plot(results, type=c("g", "o"))
 # 
 #   print("END OF RUN")
 # }
+
+
