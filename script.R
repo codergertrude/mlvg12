@@ -19,6 +19,8 @@ library(OneR)
 library(RWeka)
 # library for Neural Network
 library(neuralnet)
+#library for SMOTE
+library(smotefamily)
 
 # read from csv file, but file is not comma separated so use delim
 Data = read.delim("marketing_campaign_1.csv", stringsAsFactors = FALSE)
@@ -249,9 +251,20 @@ for(i in 1:ncol(Data)){
 }
 DataNum = Data[,numlist]
 Data.pca <- prcomp(DataNum, center = TRUE, scale. = TRUE)
+
 fviz_eig(Data.pca)
 ggrepel.max.overlaps = Inf
 fviz_pca_var(Data.pca, col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE)
+
+## Feature transformation using principal components
+PC <- Data.pca[[5]] # creating component matrix
+PC <- PC[,1:2]
+dim(PC)
+typeof(PC)
+DataM = t(as.matrix(DataNum))
+dim(DataM)
+typeof(PC)
+DataFinal = PC %*% DataM
 
 # Feature importance using LVQ (Learning Vector Quantified)
 cat("LVQ feature selection implementation\n")
@@ -274,6 +287,11 @@ results <- rfe(Data[,1:ncol(Data)-1], Data$Target, sizes=c(1:ncol(Data)-1), rfeC
 print(results)
 predictors(results)
 plot(results, type=c("g", "o"))
+
+# SMOTE for minority label
+cat("SMOTE implementation\n")
+
+SMOTE(Target~., data = Data, perc.over = 300, k = 5)
 
 # # C5.0 algorithm (decision tree)
 # cat("C5.0 implementation")
