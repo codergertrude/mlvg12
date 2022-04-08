@@ -258,10 +258,10 @@ fviz_pca_var(Data.pca, col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B80
 
 ## Feature transformation using principal components
 PC <- Data.pca[[5]] # creating component matrix
-PC <- PC[,1:2]
+PC <- PC[,1:2] # take first two components' variance (about 60% of total var)
 dim(PC)
 typeof(PC)
-DataM = t(as.matrix(DataNum))
+DataM = t(as.matrix(DataNum)) # convert DF to matrix for mult
 dim(DataM)
 typeof(PC)
 DataFinal = PC %*% DataM
@@ -288,10 +288,10 @@ print(results)
 predictors(results)
 plot(results, type=c("g", "o"))
 
-# SMOTE for minority label
+# SMOTE for minority label (in progress)
 cat("SMOTE implementation\n")
 
-SMOTE(Target~., data = Data, perc.over = 300, k = 5)
+# Data.sm = SMOTE(Data, Data$Target, K = 5)
 
 # # C5.0 algorithm (decision tree)
 # cat("C5.0 implementation")
