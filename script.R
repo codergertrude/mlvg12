@@ -11,6 +11,7 @@ library(Hmisc)
 library(corrplot)
 library(devtools)
 library(factoextra)
+library(mlbench)
 # library for C5 algorithm
 library(C50)
 # library for OneR algorithm
@@ -257,15 +258,15 @@ fviz_eig(Data.pca)
 ggrepel.max.overlaps = Inf
 fviz_pca_var(Data.pca, col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE)
 
-## Feature transformation using principal components
-PC <- Data.pca[[5]] # creating component matrix
-PC <- PC[,1:2] # take first two components' variance (about 60% of total var)
-dim(PC)
-typeof(PC)
-DataM = t(as.matrix(DataNum)) # convert DF to matrix for mult
-dim(DataM)
-typeof(PC)
-DataFinal = PC %*% DataM
+# ## Feature transformation using principal components
+# PC <- Data.pca[[5]] # creating component matrix
+# PC <- PC[,1:2] # take first two components' variance (about 60% of total var)
+# dim(PC)
+# typeof(PC)
+# DataM = t(as.matrix(DataNum)) # convert DF to matrix for mult
+# dim(DataM)
+# typeof(PC)
+# DataFinal = PC %*% DataM
 
 # Feature importance using LVQ (Learning Vector Quantified)
 cat("LVQ feature selection implementation\n")
@@ -279,15 +280,15 @@ plot(importance)
 print(model)
 confusionMatrix(model)
 
-# Feature importance using RFE (Recursive Feature Elimination)
-cat("RFE feature selection implementation\n")
-
-set.seed(42)
-control <- rfeControl(functions=rfFuncs, method="cv", number=10)
-results <- rfe(Data[,1:ncol(Data)-1], Data$Target, sizes=c(1:ncol(Data)-1), rfeControl=control)
-print(results)
-predictors(results)
-plot(results, type=c("g", "o"))
+# # Feature importance using RFE (Recursive Feature Elimination) (out of commission due to caret error)
+# cat("RFE feature selection implementation\n")
+# 
+# set.seed(42)
+# control <- rfeControl(functions=rfFuncs, method="cv", number=10)
+# results <- rfe(Data[,1:ncol(Data)-1], Data$Target, sizes=c(1:ncol(Data)-1), rfeControl=control)
+# print(results)
+# predictors(results)
+# plot(results, type=c("g", "o"))
 
 # SMOTE for minority label (in progress)
 cat("SMOTE implementation\n")
