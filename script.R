@@ -230,9 +230,6 @@ for(i in 1:ncol(Data)){
 }
 Data <- Data %>% mutate_each_(list(~scale(.) %>% as.vector), vars = norm_list)
 
-# one-hot encoding (on a new df for testing)
-DataOH <- as.data.frame(model.matrix(~0+., Data), row.names = NULL, optional = FALSE)
-
 # partition percentage for loop
 training_data_percentages <- seq(from = 0.1, to = 0.9, length.out = 9)
 
@@ -240,7 +237,11 @@ cat("Modeling step has been reached.\n")
 
 # rename last column to target, last column must always be the target variable
 names(Data)[ncol(Data)] <- "Target"
+
+# one-hot encoding (on a new df for testing)
+DataOH <- as.data.frame(model.matrix(~0+., Data), row.names = NULL, optional = FALSE)
 names(DataOH)[ncol(DataOH)] <- "Target"
+DataOH$Target <- as.factor(DataOH$Target)
 
 # principal component analysis
 numlist = c()
