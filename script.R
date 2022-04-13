@@ -240,7 +240,9 @@ cat("Modeling step has been reached.\n")
 
 # rename last column to target, last column must always be the target variable
 names(Data)[ncol(Data)] <- "Target"
+
 names(DataOH)[ncol(DataOH)] <- "Target"
+DataOH$Target <- as.factor(DataOH$Target)
 
 # principal component analysis
 numlist = c()
