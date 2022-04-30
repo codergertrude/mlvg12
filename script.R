@@ -317,30 +317,58 @@ prompt.onehot <- as.integer(prompt.onehot)
 if(prompt.onehot == 1){
   Data <- DataOH
   
-  # SMOTE for minority label (in progress)
+  # SMOTE for minority label
   cat("SMOTE implementation\n")
   
+  # print target class splits
   tar_rat <- prop.table(table(DataNN$Target)) * 100
   rat1 <- tar_rat[1]
   rat2 <- tar_rat[2]
   cat(sprintf("Target class ratio: s - f", rat1, rat2))
   
+  # prompt for SMOTE
   prompt.smote <- readline(prompt = "Enter 1 for SMOTE: ")
   prompt.smote <- as.integer(prompt.smote)
   
   if(prompt.smote == 1){
+    # run SMOTE on OH encoded data, requires all numeric
     DataSM <- SMOTE(DataNN, Data$Target, K = 5)
-    DataSM <- DataSM[["data"]]
-    DataSM <- DataSM[, -ncol(DataSM)]
+    DataSM <- DataSM[["data"]] # extract dataframe from object
+    DataSM <- DataSM[, -ncol(DataSM)] # remove auto-added class col
+    
+    # print new target class ratios
     tar_rat <- prop.table(table(DataSM$Target)) * 100
     rat1 <- tar_rat[1]
     rat2 <- tar_rat[2]
     cat(sprintf("Target class ratio: s - f", rat1, rat2))
+    
+    # reorganize data variables
     Data <- DataSM
+    DataNN <- DataSM
+    Data$Target <- as.factor(Data$Target)
   } else {
     sprintf("SMOTE will not be used for modelling.")
+    
   }
 }
+
+# a second pass for constant columns, if one-hot encoding was employed
+col_list = c()
+for(i in 1:ncol(Data)){
+  if(length(unique(Data[, i])) == nrow(Data)){
+    col_list = c(col_list, i)
+    cat(sprintf("column %s has been dropped (IDENTIFIER)\n", i))
+  }
+  else if(length(unique(Data[, i])) == 1){
+    col_list = c(col_list, i)
+    cat(sprintf("column %s has been dropped (CONSTANT)\n", i))
+  }
+  else{
+    cat(sprintf("column %s will be included in modelling\n", i))
+  }
+}
+Data = subset(Data, select = -c(col_list))
+cat("Columns have been dropped.\n")
 
 # model query implementation
 
@@ -349,7 +377,7 @@ Decision Tree = 1
 Naive Bayes = 2
 Support-Vector Machine = 3
 Logistic Regression = 4
-Neural Network = 5")
+Neural Network = 5 (uses OH encoding)")
 prompt.models <- as.integer(prompt.models)
 
 # modelling with prompts
