@@ -32,7 +32,7 @@ Data = read.delim("marketing_campaign_1.csv", stringsAsFactors = FALSE)
 # dim(Data)
 # is.na(Data)
 
-# functions
+## function definitions 
 
 # function for finding y percent of x
 prcnt <- function(x, y){
@@ -242,7 +242,15 @@ names(Data)[ncol(Data)] <- "Target"
 # one-hot encoding (on a new df for testing)
 DataOH <- as.data.frame(model.matrix(~0+., Data), row.names = NULL, optional = FALSE)
 names(DataOH)[ncol(DataOH)] <- "Target"
+DataNN <- as.data.frame(DataOH)
 DataOH$Target <- as.factor(DataOH$Target)
+
+# print statements prep
+cat("---------------------------------------------------------------------------------------------------------------------------------", file = "Results.txt", sep = "\n")
+cat("\t TR-Data% \t TS-Data% \t Accuracy% \t Kappa% \t Sensitivity% \t Specificity% \t Precision% \t Recall%", file = "Results.txt", sep = "\n", append = TRUE) # Apply cat & append
+cat("---------------------------------------------------------------------------------------------------------------------------------", file = "Results.txt", sep = "\n", append = TRUE)
+
+pfc <- 0 # pfc - performance frame counter
 
 # principal component analysis
 numlist = c()
@@ -271,14 +279,20 @@ fviz_pca_var(Data.pca, col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B80
 # Feature importance using LVQ (Learning Vector Quantified)
 cat("LVQ feature selection implementation\n")
 
-set.seed(42)
-train_control <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
-model <- train(Target~., data = Data, trControl = train_control, method = "lvq")
-importance <- varImp(model, scale=FALSE)
-print(importance)
-plot(importance)
-print(model)
-confusionMatrix(model)
+feature.prompt <- readline(prompt = "Type 1 to include feature selection: ")
+feature.prompt <- as.integer(feature.prompt)
+
+if(feature.prompt == 1){
+  set.seed(42)
+  train_control <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
+  model <- train(Target~., data = Data, trControl = train_control, method = "lvq")
+  importance <- varImp(model, scale=FALSE)
+  print(importance)
+  plot(importance)
+  print(model)
+  confusionMatrix(model)
+}
+
 
 # # Feature importance using RFE (Recursive Feature Elimination) (out of commission due to caret error)
 # cat("RFE feature selection implementation\n")
@@ -293,64 +307,198 @@ confusionMatrix(model)
 # SMOTE for minority label (in progress)
 cat("SMOTE implementation\n")
 
-# Data.sm = SMOTE(Data, Data$Target, K = 5)
+prompt.smote <- readline(prompt = "Enter 1 for SMOTE: ")
+prompt.smote <- as.integer(prompt.smote)
 
-# # C5.0 algorithm (decision tree)
-# cat("C5.0 implementation")
-# for(t in training_data_percentages){
-#   print("================================================================================================================")
-#   cat(sprintf("Current training partition: %s\n", t))
-# 
-#   indx_partition = createDataPartition(Data[, ncol(Data)], p = t, list = FALSE)
-#   training_data = Data[indx_partition,]
-#   testing_data = Data[-indx_partition,]
-# 
-#   set.seed(42)
-#   TrainedClassifier = C5.0(x = training_data[, 1:ncol(testing_data)-1], y = training_data[, ncol(Data)])
-#   Predicted_outcomes = predict(TrainedClassifier, newdata = testing_data[, 1:ncol(testing_data)-1])
-# 
-#   cm <- confusionMatrix(testing_data[, ncol(testing_data)], Predicted_outcomes)
-#   print(cm)
-#   print("END OF RUN")
-# }
+if(prompt.smote == 1){
+  Data.sm = SMOTE(Data, Data$Target, K = 5)
+} else {
+  sprintf("SMOTE will not be used for modelling.")
+}
 
-# # Naive Bayes algorithm
-# cat("Naive Bayes implementation")
-# for(t in training_data_percentages){
-#   print("================================================================================================================")
-#   cat(sprintf("Current train-test split: %s-%1.0f\n", t*100, (1-t)*100))
-# 
-#   indx_partition = createDataPartition(Data[, ncol(Data)], p = t, list = FALSE)
-#   training_data = Data[indx_partition,]
-#   testing_data = Data[-indx_partition,]
-# 
-#   set.seed(42)
-#   TrainedClassifier = naiveBayes(Target ~ ., data = training_data, laplace=0)
-#   Predicted_outcomes = predict(TrainedClassifier, newdata = testing_data[,1:ncol(testing_data)-1])
-# 
-#   cm <- confusionMatrix(testing_data[, ncol(testing_data)], Predicted_outcomes)
-#   print(cm)
-#   print("END OF RUN")
-# }
 
-# # Support-Vector Machine
-# cat("SVM implementation")
-# for(t in training_data_percentages){
-#   print("================================================================================================================")
-#   cat(sprintf("Current train-test split: %s-%1.0f\n", t*100, (1-t)*100))
-# 
-#   indx_partition = createDataPartition(Data[, ncol(Data)], p = t, list = FALSE)
-#   training_data = Data[indx_partition,]
-#   testing_data = Data[-indx_partition,]
-# 
-#   set.seed(42)
-#   TrainedClassifier = svm(Target ~ ., data = training_data, scale = FALSE, type = 'C-classification', kernel = 'linear')
-#   Predicted_outcomes = predict(TrainedClassifier, newdata = testing_data[,1:ncol(testing_data)-1])
-# 
-#   cm <- confusionMatrix(testing_data[, ncol(testing_data)], Predicted_outcomes)
-#   print(cm)
-#   print("END OF RUN")
-# }
+# model query implementation
+
+prompt.models <- readline(prompt = "
+Decision Tree = 1
+Naive Bayes = 2
+Support-Vector Machine = 3
+Logistic Regression = 4
+Neural Network = 5
+Please pick a model by entering the corresponding number: ")
+prompt.models <- as.integer(prompt.models)
+
+if(prompt.models == 1){
+  # C5.0 algorithm (decision tree)
+  cat("C5.0 implementation")
+  for(t in training_data_percentages){
+    print("================================================================================================================")
+    cat(sprintf("Current training partition: %s\n", t))
+    
+    pfc <- pfc + 1
+    
+    indx_partition = createDataPartition(Data[, ncol(Data)], p = t, list = FALSE)
+    training_data = Data[indx_partition,]
+    testing_data = Data[-indx_partition,]
+    
+    set.seed(42)
+    TrainedClassifier = C5.0(x = training_data[, 1:ncol(testing_data)-1], y = training_data[, ncol(Data)])
+    Predicted_outcomes = predict(TrainedClassifier, newdata = testing_data[, 1:ncol(testing_data)-1])
+    
+    cm <- confusionMatrix(testing_data[, ncol(testing_data)], Predicted_outcomes)
+    print(cm)
+    
+    cat("\t ", t*100, "\t\t ", (1-t)*100, "\t\t ",
+        format(round(cm[["overall"]][["Accuracy"]]*100, 2), nsmall = 2), "\t\t ",
+        format(round(cm[["overall"]][["Kappa"]]*100, 2), nsmall = 2), "\t\t ",
+        format(round(cm[["byClass"]][["Sensitivity"]]*100, 2), nsmall = 2), "\t\t ",
+        format(round(cm[["byClass"]][["Specificity"]]*100, 2), nsmall = 2), "\t\t ",
+        format(round(cm[["byClass"]][["Precision"]]*100, 2), nsmall = 2), "\t\t ",
+        format(round(cm[["byClass"]][["Recall"]]*100, 2), nsmall = 2), "\n", 
+        file = "Results.txt", sep = " ", append = TRUE)
+    
+    print("END OF RUN")
+  }
+} else if(prompt.models == 2){
+    # Naive Bayes algorithm
+    cat("Naive Bayes implementation")
+    for(t in training_data_percentages){
+      print("================================================================================================================")
+      cat(sprintf("Current train-test split: %s-%1.0f\n", t*100, (1-t)*100))
+      
+      pfc <- pfc + 1
+      
+      indx_partition = createDataPartition(Data[, ncol(Data)], p = t, list = FALSE)
+      training_data = Data[indx_partition,]
+      testing_data = Data[-indx_partition,]
+      
+      set.seed(42)
+      TrainedClassifier = naiveBayes(Target ~ ., data = training_data, laplace=0)
+      Predicted_outcomes = predict(TrainedClassifier, newdata = testing_data[,1:ncol(testing_data)-1])
+      
+      cm <- confusionMatrix(testing_data[, ncol(testing_data)], Predicted_outcomes)
+      print(cm)
+      
+      cat("\t ", t*100, "\t\t ", (1-t)*100, "\t\t ",
+          format(round(cm[["overall"]][["Accuracy"]]*100, 2), nsmall = 2), "\t\t ",
+          format(round(cm[["overall"]][["Kappa"]]*100, 2), nsmall = 2), "\t\t ",
+          format(round(cm[["byClass"]][["Sensitivity"]]*100, 2), nsmall = 2), "\t\t ",
+          format(round(cm[["byClass"]][["Specificity"]]*100, 2), nsmall = 2), "\t\t ",
+          format(round(cm[["byClass"]][["Precision"]]*100, 2), nsmall = 2), "\t\t ",
+          format(round(cm[["byClass"]][["Recall"]]*100, 2), nsmall = 2), "\n", 
+          file = "Results.txt", sep = " ", append = TRUE)
+      
+      print("END OF RUN")
+    }
+} else if(prompt.models == 3){
+    # Support-Vector Machine
+    cat("SVM implementation")
+    for(t in training_data_percentages){
+      print("================================================================================================================")
+      cat(sprintf("Current train-test split: %s-%1.0f\n", t*100, (1-t)*100))
+      
+      pfc <- pfc + 1
+      
+      indx_partition = createDataPartition(Data[, ncol(Data)], p = t, list = FALSE)
+      training_data = Data[indx_partition,]
+      testing_data = Data[-indx_partition,]
+      
+      set.seed(42)
+      TrainedClassifier = svm(Target ~ ., data = training_data, scale = FALSE, type = 'C-classification', kernel = 'linear')
+      Predicted_outcomes = predict(TrainedClassifier, newdata = testing_data[,1:ncol(testing_data)-1])
+      
+      cm <- confusionMatrix(testing_data[, ncol(testing_data)], Predicted_outcomes)
+      print(cm)
+      
+      cat("\t ", t*100, "\t\t ", (1-t)*100, "\t\t ",
+          format(round(cm[["overall"]][["Accuracy"]]*100, 2), nsmall = 2), "\t\t ",
+          format(round(cm[["overall"]][["Kappa"]]*100, 2), nsmall = 2), "\t\t ",
+          format(round(cm[["byClass"]][["Sensitivity"]]*100, 2), nsmall = 2), "\t\t ",
+          format(round(cm[["byClass"]][["Specificity"]]*100, 2), nsmall = 2), "\t\t ",
+          format(round(cm[["byClass"]][["Precision"]]*100, 2), nsmall = 2), "\t\t ",
+          format(round(cm[["byClass"]][["Recall"]]*100, 2), nsmall = 2), "\n", 
+          file = "Results.txt", sep = " ", append = TRUE)
+      
+      print("END OF RUN")
+    }
+} else if(prompt.models == 4){
+    # Logistic regression algorithm (courtesy of Oil)
+    cat("Logistic regression implementation")
+    for(t in training_data_percentages){
+      print("================================================================================================================")
+      cat(sprintf("Current train-test split: %s-%1.0f\n", t*100, (1-t)*100))
+      
+      pfc <- pfc + 1
+      
+      indx_partition = createDataPartition(Data[, ncol(Data)], p = t, list = FALSE)
+      training_data = Data[indx_partition,]
+      testing_data = Data[-indx_partition,]
+      
+      set.seed(42)
+      TrainedClassifier = glm(Target ~ .,family=binomial(link='logit'), data = training_data)
+      Predicted_outcomes = predict(TrainedClassifier, newdata = testing_data[,1:ncol(testing_data)-1], type = "response")
+      
+      # Set decision threshold
+      Predicted_outcomes <- ifelse(Predicted_outcomes > 0.5, 1, 0)
+      
+      cat("modeling reached\n")
+      
+      cm <- confusionMatrix(testing_data$Target, as.factor(Predicted_outcomes))
+      print(cm)
+      
+      cat("\t ", t*100, "\t\t ", (1-t)*100, "\t\t ",
+          format(round(cm[["overall"]][["Accuracy"]]*100, 2), nsmall = 2), "\t\t ",
+          format(round(cm[["overall"]][["Kappa"]]*100, 2), nsmall = 2), "\t\t ",
+          format(round(cm[["byClass"]][["Sensitivity"]]*100, 2), nsmall = 2), "\t\t ",
+          format(round(cm[["byClass"]][["Specificity"]]*100, 2), nsmall = 2), "\t\t ",
+          format(round(cm[["byClass"]][["Precision"]]*100, 2), nsmall = 2), "\t\t ",
+          format(round(cm[["byClass"]][["Recall"]]*100, 2), nsmall = 2), "\n", 
+          file = "Results.txt", sep = " ", append = TRUE)
+      
+      print("END OF RUN")
+    }
+} else if(prompt.models == 5){
+    # Neural Network algorithm
+    cat("Neural Network implementation")
+    for(t in training_data_percentages){
+      print("================================================================================================================")
+      cat(sprintf("Current train-test split: %s-%1.0f\n", t*100, (1-t)*100))
+      
+      pfc <- pfc + 1
+      
+      indx_partition = createDataPartition(DataNN[, ncol(DataNN)], p = t, list = FALSE)
+      training_data = DataNN[indx_partition,]
+      testing_data = DataNN[-indx_partition,]
+      
+      cat("Partitions created.\n")
+      
+      set.seed(42)
+      # nn formula only takes 30 variables, has to be filtered down
+      TrainedNeuralNet <- neuralnet(Target ~ ., data = training_data[9:ncol(training_data)], hidden = 2)
+      cat("Neural network trained.\n")
+      
+      Predicted_Parameters <- compute(TrainedNeuralNet, testing_data)
+      Predicted_Net_Results <- Predicted_Parameters$net.result
+      Predicted_Data <- sapply(Predicted_Net_Results,round,digits=0)
+      Predicted_Data <- data.frame(Predicted_Data)
+      par(mfrow=c(2,1))
+      corln <- cor(Predicted_Data, testing_data$Target)
+      corln
+      
+      cat("\t ", t*100, "\t\t ", (1-t)*100, "\t\t ",
+          format(round(cm[["overall"]][["Accuracy"]]*100, 2), nsmall = 2), "\t\t ",
+          format(round(cm[["overall"]][["Kappa"]]*100, 2), nsmall = 2), "\t\t ",
+          format(round(cm[["byClass"]][["Sensitivity"]]*100, 2), nsmall = 2), "\t\t ",
+          format(round(cm[["byClass"]][["Specificity"]]*100, 2), nsmall = 2), "\t\t ",
+          format(round(cm[["byClass"]][["Precision"]]*100, 2), nsmall = 2), "\t\t ",
+          format(round(cm[["byClass"]][["Recall"]]*100, 2), nsmall = 2), "\n", 
+          file = "Results.txt", sep = " ", append = TRUE)
+      
+      print("END OF RUN")
+    }
+  } else {
+    sprintf("Invalid input: s", prompt.models)
+}
 
 # # OneR algorithm (not working)
 # cat("OneR implementation")
@@ -370,57 +518,3 @@ cat("SMOTE implementation\n")
 #   print(cm)
 #   print("END OF RUN")
 # }
-
-# # Logistic regression algorithm (courtesy of Oil)
-# cat("Logistic regression implementation")
-# for(t in training_data_percentages){
-#   print("================================================================================================================")
-#   cat(sprintf("Current training partition: %s\n", t))
-# 
-#   indx_partition = createDataPartition(Data[, ncol(Data)], p = t, list = FALSE)
-#   training_data = Data[indx_partition,]
-#   testing_data = Data[-indx_partition,]
-# 
-#   set.seed(42)
-#   TrainedClassifier = glm(Target ~ .,family=binomial(link='logit'), data = training_data)
-#   Predicted_outcomes = predict(TrainedClassifier, newdata = testing_data[,1:ncol(testing_data)-1], type = "response")
-# 
-#   # Set decision threshold
-#   Predicted_outcomes <- ifelse(Predicted_outcomes > 0.5, 1, 0)
-#   
-#   cat("modeling reached\n")
-# 
-#   cm <- confusionMatrix(testing_data$Target, as.factor(Predicted_outcomes))
-#   print(cm)
-#   print("END OF RUN")
-# }
-
-# # Neural Network algorithm
-# cat("Neural Network implementation")
-# for(t in training_data_percentages){
-#   print("================================================================================================================")
-#   cat(sprintf("Current training partition: %s\n", t))
-# 
-#   indx_partition = createDataPartition(DataOH[, ncol(Data)], p = t, list = FALSE)
-#   training_data = DataOH[indx_partition,]
-#   testing_data = DataOH[-indx_partition,]
-# 
-#   cat("Partitions created.\n")
-# 
-#   set.seed(42)
-#   # nn formula only takes 30 variables, has to be filtered down
-#   TrainedNeuralNet <- neuralnet(Target ~ ., data = training_data[9:ncol(training_data)], hidden = 2)
-#   cat("Neural network trained.\n")
-# 
-#   Predicted_Parameters <- compute(TrainedNeuralNet, testing_data)
-#   Predicted_Net_Results <- Predicted_Parameters$net.result
-#   Predicted_Data <- sapply(Predicted_Net_Results,round,digits=0)
-#   Predicted_Data <- data.frame(Predicted_Data)
-#   par(mfrow=c(2,1))
-#   corln <- cor(Predicted_Data, testing_data$Target)
-#   corln
-# 
-#   print("END OF RUN")
-# }
-
-
