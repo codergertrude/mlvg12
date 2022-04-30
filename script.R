@@ -179,9 +179,14 @@ for(i in 1:ncol(Data)){
 Data = Data[-c(frow_list),]
 
 # print correlation matrix
-model.matrix(~0+., Data) %>%
+prompt.corrmatrix <- readline(prompt = "Type 1 to print a correlation matrix: ")
+prompt.corrmatrix <- as.numeric(prompt.corrmatrix)
+
+if(prompt.corrmatrix == 1){
+  model.matrix(~0+., Data) %>%
   cor() %>%
   ggcorrplot(show.diag = F, type="lower", lab=TRUE, lab_size=2)
+}
 
 # capping extreme outliers 
 for(i in 1:ncol(Data)){
@@ -242,13 +247,14 @@ names(Data)[ncol(Data)] <- "Target"
 # one-hot encoding (on a new df for testing)
 DataOH <- as.data.frame(model.matrix(~0+., Data), row.names = NULL, optional = FALSE)
 names(DataOH)[ncol(DataOH)] <- "Target"
+# dataset for neural network implementation
 DataNN <- as.data.frame(DataOH)
 DataOH$Target <- as.factor(DataOH$Target)
 
 # print statements prep
-cat("---------------------------------------------------------------------------------------------------------------------------------", file = "Results.txt", sep = "\n")
+cat("------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------", file = "Results.txt", sep = "\n")
 cat("\t TR-Data% \t TS-Data% \t Accuracy% \t Kappa% \t Sensitivity% \t Specificity% \t Precision% \t Recall%", file = "Results.txt", sep = "\n", append = TRUE) # Apply cat & append
-cat("---------------------------------------------------------------------------------------------------------------------------------", file = "Results.txt", sep = "\n", append = TRUE)
+cat("------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------", file = "Results.txt", sep = "\n", append = TRUE)
 
 pfc <- 0 # pfc - performance frame counter
 
@@ -304,30 +310,49 @@ if(feature.prompt == 1){
 # predictors(results)
 # plot(results, type=c("g", "o"))
 
-# SMOTE for minority label (in progress)
-cat("SMOTE implementation\n")
+# one-hot encoding usage prompt
+prompt.onehot <- readline(prompt = "Type 1 to one-hot encoded dataset for modelling: ")
+prompt.onehot <- as.integer(prompt.onehot)
 
-prompt.smote <- readline(prompt = "Enter 1 for SMOTE: ")
-prompt.smote <- as.integer(prompt.smote)
-
-if(prompt.smote == 1){
-  Data.sm = SMOTE(Data, Data$Target, K = 5)
-} else {
-  sprintf("SMOTE will not be used for modelling.")
+if(prompt.onehot == 1){
+  Data <- DataOH
+  
+  # SMOTE for minority label (in progress)
+  cat("SMOTE implementation\n")
+  
+  tar_rat <- prop.table(table(DataNN$Target)) * 100
+  rat1 <- tar_rat[1]
+  rat2 <- tar_rat[2]
+  cat(sprintf("Target class ratio: s - f", rat1, rat2))
+  
+  prompt.smote <- readline(prompt = "Enter 1 for SMOTE: ")
+  prompt.smote <- as.integer(prompt.smote)
+  
+  if(prompt.smote == 1){
+    DataSM <- SMOTE(DataNN, Data$Target, K = 5)
+    DataSM <- DataSM[["data"]]
+    DataSM <- DataSM[, -ncol(DataSM)]
+    tar_rat <- prop.table(table(DataSM$Target)) * 100
+    rat1 <- tar_rat[1]
+    rat2 <- tar_rat[2]
+    cat(sprintf("Target class ratio: s - f", rat1, rat2))
+    Data <- DataSM
+  } else {
+    sprintf("SMOTE will not be used for modelling.")
+  }
 }
-
 
 # model query implementation
 
-prompt.models <- readline(prompt = "
+prompt.models <- readline(prompt = "Type an algorithm's number: 
 Decision Tree = 1
 Naive Bayes = 2
 Support-Vector Machine = 3
 Logistic Regression = 4
-Neural Network = 5
-Please pick a model by entering the corresponding number: ")
+Neural Network = 5")
 prompt.models <- as.integer(prompt.models)
 
+# modelling with prompts
 if(prompt.models == 1){
   # C5.0 algorithm (decision tree)
   cat("C5.0 implementation")
