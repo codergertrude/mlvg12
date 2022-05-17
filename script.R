@@ -178,6 +178,8 @@ for(i in 1:ncol(Data)){
 # remove rows that contain outliers for factor
 Data = Data[-c(frow_list),]
 
+levels(Data$Marital_Status)
+
 # print correlation matrix
 prompt.corrmatrix <- readline(prompt = "Type 1 to print a correlation matrix: ")
 prompt.corrmatrix <- as.numeric(prompt.corrmatrix)
@@ -188,6 +190,9 @@ if(prompt.corrmatrix == 1){
   ggcorrplot(show.diag = F, type="lower", lab=TRUE, lab_size=2)
 }
 
+lower_fence <- 0
+upper_fence <- 0
+
 # capping extreme outliers 
 for(i in 1:ncol(Data)){
   if(is.numeric(Data[, i]) == TRUE){
@@ -195,14 +200,19 @@ for(i in 1:ncol(Data)){
       if(Data[n, i] > (1.5*(IQR(Data[, i]))) + thirdquantile(Data[, i])){
         Data[n, i] = ninetyfivep(Data[, i])
         cat(sprintf("row %s column %1.0f is an outlier (too large)\n", n, i))
+        upper_fence = upper_fence + 1
       }
       else if(Data[n, i] < firstquantile(Data[, i]) - (1.5*(IQR(Data[, i])))){
         Data[n, i] = fivep(Data[, i])
         cat(sprintf("row %s column %1.0f is an outlier (too small)\n", n, i))
+        lower_fence = lower_fence + 1
       }
     }
   }
 }
+
+cat(sprintf("Upper fence outliers %1.0f\n", upper_fence))
+cat(sprintf("Lower fence outliers %1.0f\n", lower_fence))
 
 # prompt to show graphs, must convert prompt.graphs to numeric to use if() statement
 prompt.graphs <- readline(prompt="Type 1 to see exploratory graphs: ")
@@ -227,14 +237,24 @@ if(prompt.graphs == 1){
   }
 }
 
-# min-max normalisation 
+# min-max normalisation
+min_max_norm <- function(x) {
+  (x - min(x)) / (max(x) - min(x))
+}
+
 norm_list = c()
 for(i in 1:ncol(Data)){
   if(is.numeric(Data[, i])){
     norm_list = c(norm_list, i)
   }
 }
-Data <- Data %>% mutate_each_(list(~scale(.) %>% as.vector), vars = norm_list)
+
+for(i in norm_list){
+  cat(sprintf("Normalised column %s\n", i))
+  Data[, i] <- as.data.frame(min_max_norm(Data[, i]))
+}
+
+# Data <- Data %>% mutate_each_(list(~scale(.) %>% as.vector), vars = norm_list)
 
 # partition percentage for loop
 training_data_percentages <- seq(from = 0.1, to = 0.9, length.out = 9)
@@ -357,11 +377,9 @@ col_list = c()
 for(i in 1:ncol(Data)){
   if(length(unique(Data[, i])) == nrow(Data)){
     col_list = c(col_list, i)
-    cat(sprintf("column %s has been dropped (IDENTIFIER)\n", i))
   }
   else if(length(unique(Data[, i])) == 1){
     col_list = c(col_list, i)
-    cat(sprintf("column %s has been dropped (CONSTANT)\n", i))
   }
   else{
     cat(sprintf("column %s will be included in modelling\n", i))
