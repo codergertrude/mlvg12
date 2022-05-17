@@ -20,6 +20,7 @@ library(OneR)
 library(RWeka)
 # library for Neural Network
 library(neuralnet)
+library(nnet)
 #library for SMOTE
 library(smotefamily)
 
@@ -551,16 +552,23 @@ if(prompt.models == 1){
       
       set.seed(42)
       # nn formula only takes 30 variables, has to be filtered down
-      TrainedNeuralNet <- neuralnet(Target ~ ., data = training_data[9:ncol(training_data)], hidden = 2)
-      cat("Neural network trained.\n")
+      # TrainedNeuralNet <- neuralnet(Target ~ ., data = training_data[9:ncol(training_data)], hidden = 2)
       
-      Predicted_Parameters <- compute(TrainedNeuralNet, testing_data)
-      Predicted_Net_Results <- Predicted_Parameters$net.result
-      Predicted_Data <- sapply(Predicted_Net_Results,round,digits=0)
-      Predicted_Data <- data.frame(Predicted_Data)
+      cat("Neural network trained.\n")
+  
+      # Predicted_Parameters <- compute(TrainedNeuralNet, testing_data)
+
+      TrainedNeuralNet <- train(Target ~ ., training_data, method='nnet', linout=TRUE, trace = FALSE, tuneGrid=expand.grid(.size=c(1,5,10),.decay=c(0,0.001,0.1))) 
+      # Predicted_Net_Results <- Predicted_Parameters$net.result
+      Predicted_Net_Results <- predict(TrainedNeuralNet, testing_data)
+      Predicted_Net_Results <- ifelse(Predicted_Net_Results > 0.5, 1, 0)
+      # Predicted_Data <- sapply(Predicted_Net_Results,round,digits=0)
+      # Predicted_Data <- data.frame(Predicted_Data)
       par(mfrow=c(2,1))
-      corln <- cor(Predicted_Data, testing_data$Target)
-      corln
+      # corln <- cor(Predicted_Data, testing_data$Target)
+      # corln
+      cm <- confusionMatrix(as.factor(testing_data$Target), as.factor(Predicted_Net_Results))
+      cm
       
       cat("\t ", t*100, "\t\t ", (1-t)*100, "\t\t ",
           format(round(cm[["overall"]][["Accuracy"]]*100, 2), nsmall = 2), "\t\t ",
