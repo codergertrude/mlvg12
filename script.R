@@ -254,6 +254,10 @@ for(i in norm_list){
   Data[, i] <- as.data.frame(min_max_norm(Data[, i]))
 }
 
+tar_rat_initial <- prop.table(table(Data$Response)) * 100
+tar_rat_initial
+
+
 # Data <- Data %>% mutate_each_(list(~scale(.) %>% as.vector), vars = norm_list)
 
 # partition percentage for loop
@@ -330,6 +334,8 @@ if(feature.prompt == 1){
 # predictors(results)
 # plot(results, type=c("g", "o"))
 
+
+
 # one-hot encoding usage prompt
 prompt.onehot <- readline(prompt = "Type 1 to one-hot encoded dataset for modelling: ")
 prompt.onehot <- as.integer(prompt.onehot)
@@ -344,7 +350,7 @@ if(prompt.onehot == 1){
   tar_rat <- prop.table(table(DataNN$Target)) * 100
   rat1 <- tar_rat[1]
   rat2 <- tar_rat[2]
-  cat(sprintf("Target class ratio: s - f", rat1, rat2))
+  cat(sprintf("Target class ratio: %s - %f\n", rat1, rat2))
   
   # prompt for SMOTE
   prompt.smote <- readline(prompt = "Enter 1 for SMOTE: ")
@@ -360,7 +366,7 @@ if(prompt.onehot == 1){
     tar_rat <- prop.table(table(DataSM$Target)) * 100
     rat1 <- tar_rat[1]
     rat2 <- tar_rat[2]
-    cat(sprintf("Target class ratio: s - f", rat1, rat2))
+    cat(sprintf("Target class ratio: %s - %f\n", rat1, rat2))
     
     # reorganize data variables
     Data <- DataSM
