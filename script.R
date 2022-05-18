@@ -284,19 +284,23 @@ cat("---------------------------------------------------------------------------
 pfc <- 0 # pfc - performance frame counter
 
 # principal component analysis
-numlist = c()
-for(i in 1:ncol(Data)){
-  if(is.numeric(Data[,i]) == TRUE){
-    numlist = c(numlist, i)
+pca.prompt <- readline(prompt = "Type 1 to view principal component analysis: ")
+pca.prompt <- as.integer(pca.prompt)
+
+if(pca.prompt == 1){
+  numlist = c()
+  for(i in 1:ncol(Data)){
+    if(is.numeric(Data[,i]) == TRUE){
+      numlist = c(numlist, i)
+    }
   }
+  DataNum = Data[,numlist]
+  Data.pca <- prcomp(DataNum, center = TRUE, scale. = TRUE)
+
+  fviz_eig(Data.pca)
+  ggrepel.max.overlaps = Inf
+  fviz_pca_var(Data.pca, col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE)
 }
-DataNum = Data[,numlist]
-Data.pca <- prcomp(DataNum, center = TRUE, scale. = TRUE)
-
-fviz_eig(Data.pca)
-ggrepel.max.overlaps = Inf
-fviz_pca_var(Data.pca, col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE)
-
 # ## Feature transformation using principal components
 # PC <- Data.pca[[5]] # creating component matrix
 # PC <- PC[,1:2] # take first two components' variance (about 60% of total var)
@@ -327,12 +331,17 @@ if(feature.prompt == 1){
 # Feature importance using RFE (Recursive Feature Elimination) (out of commission due to caret error)
 cat("RFE feature selection implementation\n")
 
-set.seed(42)
-control <- rfeControl(functions=rfFuncs, method="cv", number=10)
-results <- rfe(Data[,1:ncol(Data)-1], Data$Target, sizes=c(1:ncol(Data)-1), rfeControl=control)
-print(results)
-predictors(results)
-plot(results, type=c("g", "o"))
+rfe.prompt <- readline(prompt = "Type 1 to view RFE results (takes a long time): ")
+rfe.prompt <- as.integer(rfe.prompt)
+
+if(rfe.prompt == 1){
+  set.seed(42)
+  control <- rfeControl(functions=rfFuncs, method="cv", number=10)
+  results <- rfe(Data[,1:ncol(Data)-1], Data$Target, sizes=c(1:ncol(Data)-1), rfeControl=control)
+  print(results)
+  predictors(results)
+  plot(results, type=c("g", "o"))
+}
 
 # one-hot encoding usage prompt
 prompt.onehot <- readline(prompt = "Type 1 to one-hot encoded dataset for modelling: ")
@@ -372,7 +381,6 @@ if(prompt.onehot == 1){
     Data$Target <- as.factor(Data$Target)
   } else {
     sprintf("SMOTE will not be used for modelling.")
-    
   }
 }
 
