@@ -310,7 +310,7 @@ fviz_pca_var(Data.pca, col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B80
 # Feature importance using LVQ (Learning Vector Quantified)
 cat("LVQ feature selection implementation\n")
 
-feature.prompt <- readline(prompt = "Type 1 to include feature selection: ")
+feature.prompt <- readline(prompt = "Type 1 to view feature importance (LVQ): ")
 feature.prompt <- as.integer(feature.prompt)
 
 if(feature.prompt == 1){
@@ -324,18 +324,15 @@ if(feature.prompt == 1){
   confusionMatrix(model)
 }
 
+# Feature importance using RFE (Recursive Feature Elimination) (out of commission due to caret error)
+cat("RFE feature selection implementation\n")
 
-# # Feature importance using RFE (Recursive Feature Elimination) (out of commission due to caret error)
-# cat("RFE feature selection implementation\n")
-# 
-# set.seed(42)
-# control <- rfeControl(functions=rfFuncs, method="cv", number=10)
-# results <- rfe(Data[,1:ncol(Data)-1], Data$Target, sizes=c(1:ncol(Data)-1), rfeControl=control)
-# print(results)
-# predictors(results)
-# plot(results, type=c("g", "o"))
-
-
+set.seed(42)
+control <- rfeControl(functions=rfFuncs, method="cv", number=10)
+results <- rfe(Data[,1:ncol(Data)-1], Data$Target, sizes=c(1:ncol(Data)-1), rfeControl=control)
+print(results)
+predictors(results)
+plot(results, type=c("g", "o"))
 
 # one-hot encoding usage prompt
 prompt.onehot <- readline(prompt = "Type 1 to one-hot encoded dataset for modelling: ")
